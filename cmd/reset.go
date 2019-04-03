@@ -9,11 +9,14 @@ import (
 // resetCmd represents the reset command
 var resetCmd = &cobra.Command{
 	Use:   "reset",
+	Aliases: []string{"ua"},
 	Short: "Removes every key installed with Akmey",
 	// TODO: add a long description
 	Long: `Removes every key installed with Akmey`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("reset called")
+
+		return
 	},
 }
 

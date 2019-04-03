@@ -9,6 +9,7 @@ import (
 // teamInstallCmd represents the teamInstall command
 var teamInstallCmd = &cobra.Command{
 	Use:   "teamInstall",
+	Aliases: []string{"ti"},
 	Short: "Install a team's members' keys",
 	// TODO: add a long description
 	Long: `Install team's members' keys`,

@@ -9,6 +9,7 @@ import (
 // removeCmd represents the remove command
 var removeCmd = &cobra.Command{
 	Use:   "remove",
+	Aliases: []string{"r"},
 	Short: "Remove a users key",
 	// TODO: add a long description
 	Long: `Remove a users key`,
