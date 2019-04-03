@@ -91,6 +91,7 @@ func fetchTeam(team string, server string) (Team, error) {
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:   "install",
+	Aliases: []string{"i"},
 	Short: "Install a user's key",
 	// TODO: add a long description
 	Long:  `Install a user's key'`,
