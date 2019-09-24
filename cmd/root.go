@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"log"
 	"database/sql"
-//	"path/filepath"
+	"fmt"
+	"log"
+	"os"
+	//	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -15,44 +15,42 @@ import (
 var cfgFile string
 
 func initFileDB(storagepath string, keyfilepath string) (*sql.DB, error) {
-        var dbpath string
+	var dbpath string
 	home, err := homedir.Expand("~")
 	cfe(err)
 	storagepath = home + "/.akmey"
 	if _, err := os.Stat(storagepath); os.IsNotExist(err) {
-		err = os.MkdirAll(storagepath, 0755)
+		err = os.MkdirAll(storagepath, 0644)
 		cfe(err)
 	}
 
-        //fullfilepath, err := filepath.Abs(keyfilepath)
-        dbpath = storagepath + "/keys.db"
-        db, err := sql.Open("sqlite3", "file:"+dbpath+"?cache=shared&mode=rwc")
-        cfe(err)
-        sqlStmt := `
+	//fullfilepath, err := filepath.Abs(keyfilepath)
+	dbpath = storagepath + "/keys.db"
+	db, err := sql.Open("sqlite3", "file:"+dbpath+"?cache=shared&mode=rwc")
+	cfe(err)
+	sqlStmt := `
         create table if not exists users (id integer not null, name text, email text);
         create table if not exists keys (id integer not null, comment text, value text, user_id integer not null);
         create table if not exists teams (id integer not null, name text, bio name, keys text)
 	`
-        _, err = db.Exec(sqlStmt)
-        return db, err
+	_, err = db.Exec(sqlStmt)
+	return db, err
 }
-
 
 func cfe(err error) bool {
-        if err != nil {
-                log.Panicln(err)
-                return false
-        }
-        return true
+	if err != nil {
+		log.Panicln(err)
+		return false
+	}
+	return true
 }
-
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "akmey",
-	Short: "Add/Remove SSH keys to grant access to your friends, coworkers, etc...",
-	Version: "v0.2-alpha",
-	  TraverseChildren: true,
+	Use:              "akmey",
+	Short:            "Add/Remove SSH keys to grant access to your friends, coworkers, etc...",
+	Version:          "v0.3-alpha",
+	TraverseChildren: true,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -75,9 +73,9 @@ func init() {
 	home, err := homedir.Expand("~/")
 	cfe(err)
 	sshfolder := home + "/.ssh"
-	_ = os.Mkdir(sshfolder, 755) // create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
+	_ = os.Mkdir(sshfolder, 644) // create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
 	keyfile := sshfolder + "/authorized_keys"
-	os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0755) // create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
+	os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644) // create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
 
 	server = "https://akmey.leonekmi.fr"
 
@@ -85,9 +83,9 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.e
 
-	rootCmd.PersistentFlags().StringVar(&dest, "dest", keyfile, "Where Akmey should act (your authorized_keys file)")
+	//	rootCmd.PersistentFlags().StringVar(&dest, "dest", keyfile, "Where Akmey should act (your authorized_keys file)")
 	rootCmd.PersistentFlags().StringVar(&server, "server", server, "Specify a custom Akmey server here")
-
+	rootCmd.PersistentFlags().StringVarP(&dest, "dest", "d", keyfile, "config file (default is $HOME/.ssh/authorized_keys)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
