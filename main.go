@@ -1,6 +1,6 @@
 package main
 
-import "akmey/cmd"
+import "github.com/akmey/akmey-client-new/cmd"
 
 func main() {
 	cmd.Execute()

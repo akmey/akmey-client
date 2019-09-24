@@ -90,11 +90,11 @@ func fetchTeam(team string, server string) (Team, error) {
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
-	Use:   "install",
+	Use:     "install",
 	Aliases: []string{"i"},
-	Short: "Install a user's key",
+	Short:   "Install a user's key",
 	// TODO: add a long description
-	Long:  `Install a user's key'`,
+	Long: `Install a user's key'`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var check string
 		if len(args) < 1 {
@@ -110,12 +110,12 @@ var installCmd = &cobra.Command{
 		cfe(err)
 		sshfolder := home + "/.ssh"
 		// create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
-		_ = os.Mkdir(sshfolder, 755)
+		_ = os.Mkdir(sshfolder, 644)
 		keyfile := sshfolder + "/authorized_keys"
 		// TODO: get dest from root, instead of "hardcoding" ~/.ssh/authorized_keys
 		dest := keyfile
 		// create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
-		_, err = os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0755)
+		_, err = os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644)
 		cfe(err)
 		home, err = homedir.Expand("~")
 		cfe(err)
@@ -181,7 +181,7 @@ var installCmd = &cobra.Command{
 			cfe(err)
 			defer f.Close()
 			println(dest)
-	println(server)
+			println(server)
 
 			_, err = f.WriteString(tobeinserted)
 			cfe(err)
