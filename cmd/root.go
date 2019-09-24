@@ -86,8 +86,6 @@ func init() {
 	//	rootCmd.PersistentFlags().StringVar(&dest, "dest", keyfile, "Where Akmey should act (your authorized_keys file)")
 	rootCmd.PersistentFlags().StringVar(&server, "server", server, "Specify a custom Akmey server here")
 	rootCmd.PersistentFlags().StringVarP(&dest, "dest", "d", keyfile, "config file (default is $HOME/.ssh/authorized_keys)")
-	fmt.Println(server)
-	fmt.Println(dest)
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

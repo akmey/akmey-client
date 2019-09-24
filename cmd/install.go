@@ -127,7 +127,6 @@ var installCmd = &cobra.Command{
 		checkstmt, err := tx.Prepare("select name from users where email = ? or name = ?")
 		cfe(err)
 		err = checkstmt.QueryRow(args[0], args[0]).Scan(&check)
-		fmt.Println(check)
 
 		stmt, err := tx.Prepare("insert into users(id, name, email) values(?, ?, ?)")
 		cfe(err)
@@ -180,8 +179,6 @@ var installCmd = &cobra.Command{
 			f, err := os.OpenFile(dest, os.O_APPEND|os.O_WRONLY, 0600)
 			cfe(err)
 			defer f.Close()
-			println(dest)
-			println(server)
 
 			_, err = f.WriteString(tobeinserted)
 			cfe(err)
