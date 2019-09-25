@@ -6,17 +6,16 @@ import (
 	"os"
 	"strings"
 
-	//	"log"
 	//"database/sql"
 	"encoding/json"
 	"regexp"
 
-	//	"github.com/fatih/color"
+	"github.com/briandowns/spinner"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mitchellh/go-homedir"
-	"github.com/schollz/progressbar"
 	"github.com/spf13/cobra"
 	"gopkg.in/resty.v1"
+	"time"
 )
 
 var key string
@@ -136,8 +135,10 @@ var installCmd = &cobra.Command{
 		defer checkstmt.Close()
 		defer stmt.Close()
 		defer stmt2.Close()
-		bar := progressbar.New(3)
-		_ = bar.Add(1)
+		spinner := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		finalmsg := "👍 " + args[0] + " is now installed\n"
+		spinner.FinalMSG = finalmsg
+		spinner.Start()
 		var tobeinserted string
 		// check if --key is used
 		if len(key) < 1 {
@@ -163,12 +164,14 @@ var installCmd = &cobra.Command{
 			_, err = stmt.Exec(user.ID, user.Name, user.Email)
 			cfe(err)
 		}
-		bar.Add(1)
+
 		if tobeinserted == "" {
+			finalmsg := "❌ " + args[0] + " has not been installed\n"
+			spinner.FinalMSG = finalmsg
+			spinner.Stop()
 			fmt.Println("\nThis user does not exist or doesn't have keys registered.")
 			os.Exit(1)
 		}
-		bar.Add(1)
 		dat, err := ioutil.ReadFile(dest)
 		cfe(err)
 		match := re.FindStringSubmatch(string(dat))
@@ -190,8 +193,7 @@ var installCmd = &cobra.Command{
 		}
 		err = tx.Commit()
 		cfe(err)
-		bar.Add(1)
-		fmt.Println("\n")
+		spinner.Stop()
 
 		return
 	},
