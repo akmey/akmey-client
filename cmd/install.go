@@ -1,14 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
-
-	//"database/sql"
-	"encoding/json"
 	"regexp"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	_ "github.com/mattn/go-sqlite3"
@@ -95,11 +93,13 @@ var installCmd = &cobra.Command{
 	// TODO: add a long description
 	Long: `Install a user's key'`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var check string
+		var finalmsg string
 		if len(args) < 1 {
-			fmt.Println("Please enter someone's name")
+			fmt.Println("Please enter someone's name.\nExample: akmey install Luclu7")
 			return
 		}
+		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
+		spinner.Start()
 		// TODO: get server from root, instead of here
 		server := "https://akmey.leonekmi.fr"
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
@@ -109,7 +109,7 @@ var installCmd = &cobra.Command{
 		cfe(err)
 		sshfolder := home + "/.ssh"
 		// create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
-		_ = os.Mkdir(sshfolder, 644)
+		_ = os.Mkdir(sshfolder, 755)
 		keyfile := sshfolder + "/authorized_keys"
 		// TODO: get dest from root, instead of "hardcoding" ~/.ssh/authorized_keys
 		dest := keyfile
@@ -123,22 +123,13 @@ var installCmd = &cobra.Command{
 		defer db.Close()
 		tx, err := db.Begin()
 		cfe(err)
-		checkstmt, err := tx.Prepare("select name from users where email = ? or name = ?")
-		cfe(err)
-		err = checkstmt.QueryRow(args[0], args[0]).Scan(&check)
-
 		stmt, err := tx.Prepare("insert into users(id, name, email) values(?, ?, ?)")
 		cfe(err)
 		// id = key id on server's side, value = the key itself, comment = key name, userid = user's id
 		stmt2, err := tx.Prepare("insert into keys(id, value, comment, user_id) values(?, ?, ?, ?)")
 		cfe(err)
-		defer checkstmt.Close()
 		defer stmt.Close()
 		defer stmt2.Close()
-		spinner := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		finalmsg := "👍 " + args[0] + " is now installed\n"
-		spinner.FinalMSG = finalmsg
-		spinner.Start()
 		var tobeinserted string
 		// check if --key is used
 		if len(key) < 1 {
@@ -166,7 +157,7 @@ var installCmd = &cobra.Command{
 		}
 
 		if tobeinserted == "" {
-			finalmsg := "❌ " + args[0] + " has not been installed\n"
+			finalmsg = "❌ " + args[0] + " has not been installed\n"
 			spinner.FinalMSG = finalmsg
 			fmt.Println("This user either does not exist or doesn't have any keys registered.")
 			spinner.Stop()
@@ -193,6 +184,8 @@ var installCmd = &cobra.Command{
 		}
 		err = tx.Commit()
 		cfe(err)
+		finalmsg = "✅ " + args[0] + " is now installed\n"
+		spinner.FinalMSG = finalmsg
 		spinner.Stop()
 
 		return

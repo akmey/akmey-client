@@ -20,7 +20,7 @@ func initFileDB(storagepath string, keyfilepath string) (*sql.DB, error) {
 	cfe(err)
 	storagepath = home + "/.akmey"
 	if _, err := os.Stat(storagepath); os.IsNotExist(err) {
-		err = os.MkdirAll(storagepath, 0644)
+		err = os.MkdirAll(storagepath, 0755)
 		cfe(err)
 	}
 
@@ -73,7 +73,7 @@ func init() {
 	home, err := homedir.Expand("~/")
 	cfe(err)
 	sshfolder := home + "/.ssh"
-	_ = os.Mkdir(sshfolder, 644) // create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
+	_ = os.Mkdir(sshfolder, 755) // create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
 	keyfile := sshfolder + "/authorized_keys"
 	os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644) // create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
 
