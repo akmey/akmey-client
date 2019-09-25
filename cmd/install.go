@@ -123,6 +123,7 @@ var installCmd = &cobra.Command{
 		defer db.Close()
 		tx, err := db.Begin()
 		cfe(err)
+		// TODO: check if someone's keys are already installed
 		stmt, err := tx.Prepare("insert into users(id, name, email) values(?, ?, ?)")
 		cfe(err)
 		// id = key id on server's side, value = the key itself, comment = key name, userid = user's id
