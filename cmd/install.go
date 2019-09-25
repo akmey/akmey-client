@@ -168,8 +168,8 @@ var installCmd = &cobra.Command{
 		if tobeinserted == "" {
 			finalmsg := "❌ " + args[0] + " has not been installed\n"
 			spinner.FinalMSG = finalmsg
+			fmt.Println("This user either does not exist or doesn't have any keys registered.")
 			spinner.Stop()
-			fmt.Println("\nThis user does not exist or doesn't have keys registered.")
 			os.Exit(1)
 		}
 		dat, err := ioutil.ReadFile(dest)
