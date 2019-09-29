@@ -13,6 +13,8 @@ import (
 )
 
 var cfgFile string
+var server string
+var keyfile string
 
 func initFileDB(storagepath string, keyfilepath string) (*sql.DB, error) {
 	var dbpath string
@@ -68,8 +70,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	// we can't just homedir.Expand("~/.ssh/authorized_e=keys") because it will fail if the file doesn't exist, so we basically just get user's home directory and add "/.ssh" to it
-	var dest string
-	var server string
+	//var dest string
+	//var server string
 	home, err := homedir.Expand("~/")
 	cfe(err)
 	sshfolder := home + "/.ssh"
@@ -77,15 +79,15 @@ func init() {
 	keyfile := sshfolder + "/authorized_keys"
 	os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644) // create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
 
-	server = "https://akmey.leonekmi.fr"
+	//server = "https://akmey.leonekmi.fr"
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.e
 
 	//	rootCmd.PersistentFlags().StringVar(&dest, "dest", keyfile, "Where Akmey should act (your authorized_keys file)")
-	rootCmd.PersistentFlags().StringVar(&server, "server", server, "Specify a custom Akmey server here")
-	rootCmd.PersistentFlags().StringVarP(&dest, "dest", "d", keyfile, "config file (default is $HOME/.ssh/authorized_keys)")
+	//rootCmd.PersistentFlags().StringVar(&server, "server", server, "Specify a custom Akmey server here")
+	//rootCmd.PersistentFlags().StringVarP(&dest, "dest", "d", keyfile, "config file (default is $HOME/.ssh/authorized_keys)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -104,15 +106,31 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".akmey" (without extension).
+		// looks for .akmey.json in $HOME and in the current directory
 		viper.AddConfigPath(home)
+		viper.AddConfigPath(".")
 		viper.SetConfigName(".akmey")
+		viper.SetConfigType("json")
+		viper.ReadInConfig()
+		err = viper.ReadInConfig() // Find and read the config file
+		/* if err != nil {            // Handle errors reading the config file
+			panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		} */
+
+		// sets akmey.leonekmi.fr as the default server
+		viper.SetDefault("server", "https://akmey.leonekmi.fr")
+		viper.SetDefault("keyfile", home+"/.ssh/authorized_keys")
+		// sets the server variable to what is written in the config file
+		server = viper.GetString("server")
+		keyfile = viper.GetString("keyfile")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if os.Getenv("ENVIRONMENT") == "DEV" {
+		if err := viper.ReadInConfig(); err == nil {
+			fmt.Println("Using config file:", viper.ConfigFileUsed())
+		}
 	}
 }
