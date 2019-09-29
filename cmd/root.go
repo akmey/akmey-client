@@ -122,6 +122,7 @@ func initConfig() {
 		viper.SetDefault("keyfile", home+"/.ssh/authorized_keys")
 		// sets the server variable to what is written in the config file
 		server = viper.GetString("server")
+		keyfile = viper.GetString("keyfile")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
