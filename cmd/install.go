@@ -88,7 +88,7 @@ func fetchTeam(team string, server string) (Team, error) {
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:     "install",
-	Aliases: []string{"i"},
+	Aliases: []string{"i", "in", "inst", "insta", "instal"},
 	Short:   "Install a user's key",
 	// TODO: add a long description
 	Long: `Install a user's key'`,
@@ -101,7 +101,6 @@ var installCmd = &cobra.Command{
 		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
 		spinner.Start()
 		// TODO: get server from root, instead of here
-		server := "https://akmey.leonekmi.fr"
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
 		// same stuff as usual
 		// we can't just homedir.Expand("~/.ssh/authorized_e=keys") because it will fail if the file doesn't exist, so we basically just get user's home directory and add "/.ssh" at it
