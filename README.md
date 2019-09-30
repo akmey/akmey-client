@@ -9,3 +9,11 @@ Functions to add:
 - [ ] remove
 - [ ] reset
 - [ ] team-install
+
+Example of .akmey.json:
+```json
+{
+	"server": "https://akmey.leonekmi.fr",
+	"keyfile": "/home/luclu7/.ssh/authorized_keys"
+}
+```
