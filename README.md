@@ -14,6 +14,6 @@ Example of .akmey.json:
 ```json
 {
 	"server": "https://akmey.leonekmi.fr",
-	"keyfile": "/home/luclu7/.ssh/authorized_keys"
+	"keyfile": "/home/yourusername/.ssh/authorized_keys"
 }
 ```
