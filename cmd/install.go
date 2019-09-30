@@ -98,9 +98,9 @@ var installCmd = &cobra.Command{
 			fmt.Println("Please enter someone's name.\nExample: akmey install Luclu7")
 			return
 		}
+		// starts... the spinner
 		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
 		spinner.Start()
-		// TODO: get server from root, instead of here
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
 		// same stuff as usual
 		// we can't just homedir.Expand("~/.ssh/authorized_e=keys") because it will fail if the file doesn't exist, so we basically just get user's home directory and add "/.ssh" at it
@@ -109,9 +109,6 @@ var installCmd = &cobra.Command{
 		sshfolder := home + "/.ssh"
 		// create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
 		_ = os.Mkdir(sshfolder, 755)
-		keyfile := sshfolder + "/authorized_keys"
-		// TODO: get dest from root, instead of "hardcoding" ~/.ssh/authorized_keys
-		dest := keyfile
 		// create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
 		_, err = os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644)
 		cfe(err)
@@ -163,14 +160,14 @@ var installCmd = &cobra.Command{
 			spinner.Stop()
 			os.Exit(1)
 		}
-		dat, err := ioutil.ReadFile(dest)
+		dat, err := ioutil.ReadFile(keyfile)
 		cfe(err)
 		match := re.FindStringSubmatch(string(dat))
 		// insert keys into authorized_keys
 		if match == nil {
 			tobeinserted = "\n#-- Akmey START --\n" + tobeinserted
 			tobeinserted += "#-- Akmey STOP --\n"
-			f, err := os.OpenFile(dest, os.O_APPEND|os.O_WRONLY, 0600)
+			f, err := os.OpenFile(keyfile, os.O_APPEND|os.O_WRONLY, 0600)
 			cfe(err)
 			defer f.Close()
 
@@ -179,7 +176,7 @@ var installCmd = &cobra.Command{
 		} else {
 			tobeinserted = match[1] + tobeinserted
 			newContent := strings.Replace(string(dat), match[1], tobeinserted, -1)
-			err = ioutil.WriteFile(dest, []byte(newContent), 0)
+			err = ioutil.WriteFile(keyfile, []byte(newContent), 0)
 			cfe(err)
 		}
 		err = tx.Commit()
