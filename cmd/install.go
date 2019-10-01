@@ -1,18 +1,18 @@
 package cmd
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"regexp"
-	"strings"
-
 	"github.com/briandowns/spinner"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"gopkg.in/resty.v1"
+	"io/ioutil"
+	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -85,6 +85,21 @@ func fetchTeam(team string, server string) (Team, error) {
 	return j, err
 }
 
+// blatantly stolen from https://stackoverflow.com/questions/37145935/checking-if-a-value-exists-in-sqlite-db-with-go
+func UserExists(db *sql.DB, username string) bool {
+	sqlStmt := `SELECT name FROM users WHERE name = ? COLLATE NOCASE`
+	err := db.QueryRow(sqlStmt, username).Scan(&username)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			cfe(err)
+		}
+
+		return false
+	}
+
+	return true
+}
+
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:     "install",
@@ -120,6 +135,15 @@ var installCmd = &cobra.Command{
 		tx, err := db.Begin()
 		cfe(err)
 		// TODO: check if someone's keys are already installed
+		//checkstmt, err := tx.Prepare(`select name from users where email = "?" or name = "?" collate nocase`)
+		//check := "select name from users where email = \"" + args[0] + "\" or name = \"" + args[0] + "\" collate nocase"
+		check := UserExists(db, args[0])
+		if check == true {
+			finalmsg := "👍  " + args[0] + " is already installed\n"
+			spinner.FinalMSG = finalmsg
+			spinner.Stop()
+			os.Exit(0)
+		}
 		stmt, err := tx.Prepare("insert into users(id, name, email) values(?, ?, ?)")
 		cfe(err)
 		// id = key id on server's side, value = the key itself, comment = key name, userid = user's id
