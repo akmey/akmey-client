@@ -2,21 +2,57 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/briandowns/spinner"
+	_ "github.com/mattn/go-sqlite3"
+	"io/ioutil"
+	"os"
+	"regexp"
+	//"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
 
-// resetCmd represents the reset command
+// resetCmd represents the remove command
 var resetCmd = &cobra.Command{
-	Use:   "reset",
+	Use:     "reset",
 	Aliases: []string{"ua"},
-	Short: "Removes every key installed with Akmey",
+	Short:   "Remove every keys",
 	// TODO: add a long description
-	Long: `Removes every key installed with Akmey`,
+	Long: `Remove every keys from the keyfile`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("reset called")
-
-		return
+		// starts... the spinner
+		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
+		spinner.Start()
+		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
+		db, err := initFileDB(getStoragePath(), keyfile)
+		defer db.Close()
+		tx, err := db.Begin()
+		cfe(err)
+		tx.Exec("delete from users")
+		cfe(err)
+		tx.Exec("delete from keys")
+		cfe(err)
+		// Step 1 : Fetch installed keys
+		dat, err := ioutil.ReadFile(keyfile)
+		newContent := ""
+		cfe(err)
+		match := re.FindStringSubmatch(string(dat))
+		if match == nil {
+			fmt.Println("Akmey is not present in this file")
+			os.Exit(0)
+		}
+		/* for _, torm := range toberemoved {
+			if newContent == "" {
+				newContent = strings.Replace(string(dat), match[1], torm, -1)
+			} else {
+				newContent = strings.Replace(newContent, match[1], torm, -1)
+			}
+		} */
+		err = ioutil.WriteFile(keyfile, []byte(newContent), 0)
+		cfe(err)
+		tx.Commit()
+		fmt.Println("\n")
 	},
 }
 
