@@ -21,6 +21,9 @@ var removeCmd = &cobra.Command{
 	// TODO: add a long description
 	Long: `Remove a users key`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// starts... the spinner
+		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
+		spinner.Start()
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
 		fmt.Println("remove called")
 		db, err := initFileDB(getStoragePath(), keyfile)
@@ -33,29 +36,27 @@ var removeCmd = &cobra.Command{
 		var check string
 		err = checkstmt.QueryRow(args[0], args[0]).Scan(&check)
 		if check == "" {
-			fmt.Println("This user is not installed.")
+			finalmsg := "👍  " + args[0] + " is not installed\n"
+			spinner.FinalMSG = finalmsg
+			spinner.Stop()
 			os.Exit(0)
 		}
 		err = nil
-		stmt, err := tx.Prepare("delete from users where email = ? or name = ?")
+		stmt, err := tx.Prepare("delete from users where email = ? or name = ? collate nocase")
 		cfe(err)
-		stmt2, err := tx.Prepare("delete from keys where value = ?")
+		stmt2, err := tx.Prepare("delete from keys where value = ? collate nocase")
 		cfe(err)
-		stmt3, err := tx.Prepare("select * from keys where user_id = ?")
+		stmt3, err := tx.Prepare("select * from keys where user_id = ? collate nocase")
 		cfe(err)
 		defer checkstmt.Close()
 		defer stmt.Close()
 		defer stmt2.Close()
 		defer stmt3.Close()
-		// starts... the spinner
-		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
-		spinner.Start()
 		// Step 1 : Fetch installed keys
 		rows, err := stmt3.Query(check)
 		cfe(err)
 		defer rows.Close()
 		toberemoved := map[int]string{}
-		//fmt.Println(user)
 		// Step 2 : Parse the keys in a beautiful map
 		for rows.Next() {
 			var id int
@@ -68,6 +69,7 @@ var removeCmd = &cobra.Command{
 		}
 		err = rows.Err()
 		cfe(err)
+		fmt.Println(toberemoved)
 		if len(toberemoved) == 0 {
 			fmt.Println("\nThis user does not exist or doesn't have keys registered.")
 			os.Exit(1)

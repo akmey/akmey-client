@@ -135,6 +135,7 @@ var installCmd = &cobra.Command{
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
 		// same stuff as usual
 		db, err := initFileDB(getStoragePath(), keyfile)
+		fmt.Println(keyfile)
 		defer db.Close()
 		tx, err := db.Begin()
 		cfe(err)
