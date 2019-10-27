@@ -1,18 +1,18 @@
 package cmd
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"regexp"
-	"strings"
-
 	"github.com/briandowns/spinner"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"gopkg.in/resty.v1"
+	"io/ioutil"
+	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -85,6 +85,37 @@ func fetchTeam(team string, server string) (Team, error) {
 	return j, err
 }
 
+// blatantly stolen from https://stackoverflow.com/questions/37145935/checking-if-a-value-exists-in-sqlite-db-with-go
+func checkIfUserExists(db *sql.DB, username string) bool {
+	sqlStmt := `SELECT name FROM users WHERE name = ? COLLATE NOCASE`
+	err := db.QueryRow(sqlStmt, username).Scan(&username)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			cfe(err)
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func getStoragePath() string {
+	// we can't just homedir.Expand("~/.ssh/authorized_e=keys") because it will fail if the file doesn't exist, so we basically just get user's home directory and add "/.ssh" at it
+	home, err := homedir.Expand("~/")
+	cfe(err)
+	sshfolder := home + "/.ssh"
+	// create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
+	_ = os.Mkdir(sshfolder, 755)
+	// create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
+	_, err = os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644)
+	cfe(err)
+	home, err = homedir.Expand("~")
+	cfe(err)
+	storagepath := home + "/.akmey"
+	return storagepath
+}
+
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:     "install",
@@ -98,31 +129,26 @@ var installCmd = &cobra.Command{
 			fmt.Println("Please enter someone's name.\nExample: akmey install Luclu7")
 			return
 		}
+		// starts... the spinner
 		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
 		spinner.Start()
-		// TODO: get server from root, instead of here
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
 		// same stuff as usual
-		// we can't just homedir.Expand("~/.ssh/authorized_e=keys") because it will fail if the file doesn't exist, so we basically just get user's home directory and add "/.ssh" at it
-		home, err := homedir.Expand("~/")
-		cfe(err)
-		sshfolder := home + "/.ssh"
-		// create the dir (w/ correct permissions) and ignores errors, according to stackoverflow. It's not that good but hey, it works ¯\_(ツ)_/¯
-		_ = os.Mkdir(sshfolder, 755)
-		keyfile := sshfolder + "/authorized_keys"
-		// TODO: get dest from root, instead of "hardcoding" ~/.ssh/authorized_keys
-		dest := keyfile
-		// create the file (w/ corrects permissions) if it doesn't already exist, a bit better than for the ssh dir
-		_, err = os.OpenFile(keyfile, os.O_RDONLY|os.O_CREATE, 0644)
-		cfe(err)
-		home, err = homedir.Expand("~")
-		cfe(err)
-		storagepath := home + "/.akmey"
-		db, err := initFileDB(storagepath, keyfile)
+		db, err := initFileDB(getStoragePath(), keyfile)
+		fmt.Println(keyfile)
 		defer db.Close()
 		tx, err := db.Begin()
 		cfe(err)
 		// TODO: check if someone's keys are already installed
+		//checkstmt, err := tx.Prepare(`select name from users where email = "?" or name = "?" collate nocase`)
+		//check := "select name from users where email = \"" + args[0] + "\" or name = \"" + args[0] + "\" collate nocase"
+		check := checkIfUserExists(db, args[0])
+		if check == true {
+			finalmsg := "👍  " + args[0] + " is already installed\n"
+			spinner.FinalMSG = finalmsg
+			spinner.Stop()
+			os.Exit(0)
+		}
 		stmt, err := tx.Prepare("insert into users(id, name, email) values(?, ?, ?)")
 		cfe(err)
 		// id = key id on server's side, value = the key itself, comment = key name, userid = user's id
@@ -163,14 +189,14 @@ var installCmd = &cobra.Command{
 			spinner.Stop()
 			os.Exit(1)
 		}
-		dat, err := ioutil.ReadFile(dest)
+		dat, err := ioutil.ReadFile(keyfile)
 		cfe(err)
 		match := re.FindStringSubmatch(string(dat))
 		// insert keys into authorized_keys
 		if match == nil {
 			tobeinserted = "\n#-- Akmey START --\n" + tobeinserted
 			tobeinserted += "#-- Akmey STOP --\n"
-			f, err := os.OpenFile(dest, os.O_APPEND|os.O_WRONLY, 0600)
+			f, err := os.OpenFile(keyfile, os.O_APPEND|os.O_WRONLY, 0600)
 			cfe(err)
 			defer f.Close()
 
@@ -179,7 +205,7 @@ var installCmd = &cobra.Command{
 		} else {
 			tobeinserted = match[1] + tobeinserted
 			newContent := strings.Replace(string(dat), match[1], tobeinserted, -1)
-			err = ioutil.WriteFile(dest, []byte(newContent), 0)
+			err = ioutil.WriteFile(keyfile, []byte(newContent), 0)
 			cfe(err)
 		}
 		err = tx.Commit()
