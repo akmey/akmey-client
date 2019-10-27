@@ -25,7 +25,6 @@ var removeCmd = &cobra.Command{
 		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
 		spinner.Start()
 		re := regexp.MustCompile("#-- Akmey START --\n((?:.|\n)+)\n#-- Akmey STOP --")
-		fmt.Println("remove called")
 		db, err := initFileDB(getStoragePath(), keyfile)
 		defer db.Close()
 		tx, err := db.Begin()
@@ -69,7 +68,6 @@ var removeCmd = &cobra.Command{
 		}
 		err = rows.Err()
 		cfe(err)
-		fmt.Println(toberemoved)
 		if len(toberemoved) == 0 {
 			fmt.Println("\nThis user does not exist or doesn't have keys registered.")
 			os.Exit(1)
