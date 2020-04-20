@@ -18,7 +18,7 @@ var removeCmd = &cobra.Command{
 	Use:     "remove",
 	Aliases: []string{"r", "u"},
 	Short:   "Remove a users key",
-	// TODO: add a long description
+	// TODO: make it work
 	Long: `Remove a users key`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// starts... the spinner
@@ -29,7 +29,6 @@ var removeCmd = &cobra.Command{
 		defer db.Close()
 		tx, err := db.Begin()
 		cfe(err)
-
 		checkstmt, err := tx.Prepare("select id from users where email = ? or name = ? collate nocase")
 		cfe(err)
 		var check string
@@ -41,16 +40,20 @@ var removeCmd = &cobra.Command{
 			os.Exit(0)
 		}
 		err = nil
+		// dear @leonekmi, please comment your code next time
 		stmt, err := tx.Prepare("delete from users where email = ? or name = ? collate nocase")
 		cfe(err)
 		stmt2, err := tx.Prepare("delete from keys where value = ? collate nocase")
 		cfe(err)
 		stmt3, err := tx.Prepare("select * from keys where user_id = ? collate nocase")
 		cfe(err)
+		getKey, err := tx.Prepare("select value from keys where user_id = ? collate nocase")
+		cfe(err)
 		defer checkstmt.Close()
 		defer stmt.Close()
 		defer stmt2.Close()
 		defer stmt3.Close()
+		defer getKey.Close()
 		// Step 1 : Fetch installed keys
 		rows, err := stmt3.Query(check)
 		cfe(err)
@@ -61,11 +64,19 @@ var removeCmd = &cobra.Command{
 			var id int
 			var value string
 			var comment string
-			err = rows.Scan(&id, &value, &comment)
+			var user_id string
+
+			err = rows.Scan(&id, &comment, &value, &user_id)
+
 			stmt2.Exec(value)
+			fmt.Println("id: ", value)
+			fmt.Println("value: ", value)
+			fmt.Println("comment: ", value)
+			fmt.Println(": ", value)
 			toberemoved[id] = "\n" + value + " " + comment
 			//tobeinserted += key.Key + " " + key.Comment + "\n"
 		}
+		fmt.Println("toberemoved: ", len(toberemoved))
 		err = rows.Err()
 		cfe(err)
 		if len(toberemoved) == 0 {
@@ -81,11 +92,15 @@ var removeCmd = &cobra.Command{
 			fmt.Println("Akmey is not present in this file")
 			os.Exit(0)
 		}
-		for _, torm := range toberemoved {
+
+		// well, for now match matches everything
+		for nb, torm := range toberemoved {
 			if newContent == "" {
 				newContent = strings.Replace(string(dat), match[1], torm, -1)
+				fmt.Println(nb, "newContent1: ", newContent)
 			} else {
 				newContent = strings.Replace(newContent, match[1], torm, -1)
+				fmt.Println(nb, "newContent2: ", newContent)
 			}
 		}
 		err = ioutil.WriteFile(keyfile, []byte(newContent), 0)
