@@ -1,25 +1,24 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/briandowns/spinner"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"regexp"
-	"strings"
 	"time"
-
-	"github.com/spf13/cobra"
 )
 
 // removeCmd represents the remove command
 var removeCmd = &cobra.Command{
 	Use:     "remove",
 	Aliases: []string{"r", "u"},
-	Short:   "Remove a users key",
-	// TODO: add a long description
-	Long: `Remove a users key`,
+	Short:   "Removes a user's keys",
+	Long: `Removes everything from
+	this user installed by Akmey`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// starts... the spinner
 		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
@@ -29,7 +28,6 @@ var removeCmd = &cobra.Command{
 		defer db.Close()
 		tx, err := db.Begin()
 		cfe(err)
-
 		checkstmt, err := tx.Prepare("select id from users where email = ? or name = ? collate nocase")
 		cfe(err)
 		var check string
@@ -41,6 +39,7 @@ var removeCmd = &cobra.Command{
 			os.Exit(0)
 		}
 		err = nil
+		// dear @leonekmi, please comment your code next time
 		stmt, err := tx.Prepare("delete from users where email = ? or name = ? collate nocase")
 		cfe(err)
 		stmt2, err := tx.Prepare("delete from keys where value = ? collate nocase")
@@ -57,15 +56,25 @@ var removeCmd = &cobra.Command{
 		defer rows.Close()
 		toberemoved := map[int]string{}
 		// Step 2 : Parse the keys in a beautiful map
+		dat, err := ioutil.ReadFile(keyfile)
+		fileWithKeyRemoved := dat
 		for rows.Next() {
 			var id int
 			var value string
 			var comment string
-			err = rows.Scan(&id, &value, &comment)
+			var user_id string
+
+			err = rows.Scan(&id, &comment, &value, &user_id)
+
 			stmt2.Exec(value)
 			toberemoved[id] = "\n" + value + " " + comment
-			//tobeinserted += key.Key + " " + key.Comment + "\n"
+			// creates a temporary slice to convert the key + comment from string to... a slice
+			keyByte := []byte(value + " " + comment)
+			// removes the said key, one by one, from the keyfile
+			// TODO: only remove in the akmey section of the keyfile
+			fileWithKeyRemoved = bytes.Replace(fileWithKeyRemoved, keyByte, []byte(""), 1)
 		}
+
 		err = rows.Err()
 		cfe(err)
 		if len(toberemoved) == 0 {
@@ -73,25 +82,19 @@ var removeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		stmt.Exec(args[0], args[0])
-		dat, err := ioutil.ReadFile(keyfile)
-		newContent := ""
 		cfe(err)
 		match := re.FindStringSubmatch(string(dat))
 		if match == nil {
 			fmt.Println("Akmey is not present in this file")
 			os.Exit(0)
 		}
-		for _, torm := range toberemoved {
-			if newContent == "" {
-				newContent = strings.Replace(string(dat), match[1], torm, -1)
-			} else {
-				newContent = strings.Replace(newContent, match[1], torm, -1)
-			}
-		}
-		err = ioutil.WriteFile(keyfile, []byte(newContent), 0)
+
+		err = ioutil.WriteFile(keyfile, fileWithKeyRemoved, 0)
 		cfe(err)
 		tx.Commit()
-		fmt.Println("\n")
+		finalmsg := "✅ " + args[0] + "'s keys are now removed\n"
+		spinner.FinalMSG = finalmsg
+		spinner.Stop()
 	},
 }
 
