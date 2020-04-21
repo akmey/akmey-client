@@ -16,9 +16,9 @@ import (
 var removeCmd = &cobra.Command{
 	Use:     "remove",
 	Aliases: []string{"r", "u"},
-	Short:   "Remove a users key",
-	// TODO: make it work
-	Long: `Remove a users key`,
+	Short:   "Removes a user's keys",
+	Long: `Removes everything from
+	this user installed by Akmey`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// starts... the spinner
 		spinner := spinner.New(spinner.CharSets[14], 50*time.Millisecond)
@@ -46,19 +46,15 @@ var removeCmd = &cobra.Command{
 		cfe(err)
 		stmt3, err := tx.Prepare("select * from keys where user_id = ? collate nocase")
 		cfe(err)
-		getKey, err := tx.Prepare("select value from keys where user_id = ? collate nocase")
-		cfe(err)
 		defer checkstmt.Close()
 		defer stmt.Close()
 		defer stmt2.Close()
 		defer stmt3.Close()
-		defer getKey.Close()
 		// Step 1 : Fetch installed keys
 		rows, err := stmt3.Query(check)
 		cfe(err)
 		defer rows.Close()
 		toberemoved := map[int]string{}
-		//var toberemoved string
 		// Step 2 : Parse the keys in a beautiful map
 		dat, err := ioutil.ReadFile(keyfile)
 		fileWithKeyRemoved := dat
@@ -93,21 +89,12 @@ var removeCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		// well, for now match matches everything
-		/*for nb, torm := range toberemoved {
-			if newContent == "" {
-				newContent = strings.Replace(string(dat), match[1], torm, -1)
-				fmt.Println(nb, "newContent1: ", newContent)
-			} else {
-				newContent = strings.Replace(newContent, match[1], torm, -1)
-				fmt.Println(nb, "newContent2: ", newContent)
-			}
-		} */
-
 		err = ioutil.WriteFile(keyfile, fileWithKeyRemoved, 0)
 		cfe(err)
 		tx.Commit()
-		fmt.Println("\n")
+		finalmsg := "✅ " + args[0] + "'s keys are now removed\n"
+		spinner.FinalMSG = finalmsg
+		spinner.Stop()
 	},
 }
 
