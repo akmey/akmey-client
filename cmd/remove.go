@@ -1,14 +1,14 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/briandowns/spinner"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"regexp"
-	//"strings"
-	"github.com/spf13/cobra"
 	"time"
 )
 
@@ -57,11 +57,11 @@ var removeCmd = &cobra.Command{
 		rows, err := stmt3.Query(check)
 		cfe(err)
 		defer rows.Close()
-		//toberemoved := map[int]string{}
-		var toberemoved string
+		toberemoved := map[int]string{}
+		//var toberemoved string
 		// Step 2 : Parse the keys in a beautiful map
 		dat, err := ioutil.ReadFile(keyfile)
-		var content string
+		fileWithKeyRemoved := dat
 		for rows.Next() {
 			var id int
 			var value string
@@ -71,18 +71,14 @@ var removeCmd = &cobra.Command{
 			err = rows.Scan(&id, &comment, &value, &user_id)
 
 			stmt2.Exec(value)
-			fmt.Println("id: ", id)
-			fmt.Println("value: ", value)
-			fmt.Println("comment: ", comment)
-			fmt.Println("user_id:", user_id)
-			fmt.Println(`
-			`)
-			//toberemoved[id] = "\n" + value + " " + comment
-			//content = strings.Replace(string(dat), value+" "+comment, "", 1)
-			fmt.Println("Content:", content)
-			toberemoved += string(content) + " " + string(comment) + "\n"
+			toberemoved[id] = "\n" + value + " " + comment
+			// creates a temporary slice to convert the key + comment from string to... a slice
+			keyByte := []byte(value + " " + comment)
+			// removes the said key, one by one, from the keyfile
+			// TODO: only remove in the akmey section of the keyfile
+			fileWithKeyRemoved = bytes.Replace(fileWithKeyRemoved, keyByte, []byte(""), 1)
 		}
-		fmt.Println("toberemoved: ", len(toberemoved))
+
 		err = rows.Err()
 		cfe(err)
 		if len(toberemoved) == 0 {
@@ -90,7 +86,6 @@ var removeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		stmt.Exec(args[0], args[0])
-		newContent := ""
 		cfe(err)
 		match := re.FindStringSubmatch(string(dat))
 		if match == nil {
@@ -109,9 +104,7 @@ var removeCmd = &cobra.Command{
 			}
 		} */
 
-		fmt.Println("newContent final: ", newContent)
-
-		err = ioutil.WriteFile(keyfile, []byte(newContent), 0)
+		err = ioutil.WriteFile(keyfile, fileWithKeyRemoved, 0)
 		cfe(err)
 		tx.Commit()
 		fmt.Println("\n")
