@@ -6,8 +6,8 @@ This version is not complete, and is not meant to replace the actual Akmey clien
 
 Functions to add:
 - [x] install
-- [x] remove (kinda, it ereases everything for now)
-- [x] reset (basically remove, don't run reset now, it'll nuke your keyfile)
+- [x] remove
+- [x] reset
 - [ ] team-install
 
 Example of .akmey.json:
