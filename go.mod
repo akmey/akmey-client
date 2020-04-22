@@ -1,4 +1,4 @@
-module github.com/akmey/akmey-client-new
+module github.com/akmey/akmey-client
 
 go 1.13
 
