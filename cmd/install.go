@@ -85,6 +85,12 @@ func fetchTeam(team string, server string) (Team, error) {
 	return j, err
 }
 
+func checkIfEmail(userInput string) bool {
+	matched, err := regexp.MatchString(`.@.`, userInput)
+	cfe(err)
+	return matched
+}
+
 // blatantly stolen from https://stackoverflow.com/questions/37145935/checking-if-a-value-exists-in-sqlite-db-with-go
 func checkIfUserExists(db *sql.DB, username string) bool {
 	sqlStmt := `SELECT name FROM users WHERE name = ? COLLATE NOCASE`
@@ -141,12 +147,24 @@ var installCmd = &cobra.Command{
 		// TODO: check if someone's keys are already installed
 		//checkstmt, err := tx.Prepare(`select name from users where email = "?" or name = "?" collate nocase`)
 		//check := "select name from users where email = \"" + args[0] + "\" or name = \"" + args[0] + "\" collate nocase"
-		check := checkIfUserExists(db, args[0])
-		if check == true {
-			finalmsg := "👍  " + args[0] + " is already installed\n"
-			spinner.FinalMSG = finalmsg
-			spinner.Stop()
-			os.Exit(0)
+		if checkIfEmail(args[0]) {
+			user, err := fetchUser(args[0], server)
+			cfe(err)
+			check := checkIfUserExists(db, user.Name)
+			if check {
+				finalmsg := "👍  " + args[0] + " is already installed\n"
+				spinner.FinalMSG = finalmsg
+				spinner.Stop()
+				os.Exit(0)
+			}
+		} else {
+			check := checkIfUserExists(db, args[0])
+			if check {
+				finalmsg := "👍  " + args[0] + " is already installed\n"
+				spinner.FinalMSG = finalmsg
+				spinner.Stop()
+				os.Exit(0)
+			}
 		}
 		stmt, err := tx.Prepare("insert into users(id, name, email) values(?, ?, ?)")
 		cfe(err)
