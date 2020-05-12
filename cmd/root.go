@@ -107,15 +107,15 @@ func initConfig() {
 		}
 
 		// looks for .akmey.json in $HOME and in the current directory
-		viper.AddConfigPath(home)
+		viper.AddConfigPath(home + "/.akmey")
 		viper.AddConfigPath(".")
-		viper.SetConfigName(".akmey")
+		viper.SetConfigName("config")
 		viper.SetConfigType("json")
 		viper.ReadInConfig()
 		err = viper.ReadInConfig() // Find and read the config file
-		/* if err != nil {            // Handle errors reading the config file
+		if err != nil {            // Handle errors reading the config file
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
-		} */
+		}
 
 		// sets akmey.leonekmi.fr as the default server
 		viper.SetDefault("server", "https://akmey.leonekmi.fr")
