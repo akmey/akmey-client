@@ -13,7 +13,7 @@ yay -S akmey
 On any other platform, you can simple build it with Go:
 
 ```
-go get github.com/akmey/akmey-client
+go get -u github.com/akmey/akmey-client
 ```
 
 Pre-compiled binary are also available for a selection of platform (Linux, MacOS and Windows).
@@ -29,7 +29,8 @@ Functions to add:
 - [x] install
 - [x] remove
 - [x] reset
-- [ ] team-install
+- [x] team-install
+- [ ] cross-remove
 
 ## Configuration 📝
 
