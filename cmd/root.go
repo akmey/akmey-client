@@ -51,7 +51,7 @@ func cfe(err error) bool {
 var rootCmd = &cobra.Command{
 	Use:              "akmey",
 	Short:            "Add/Remove SSH keys to grant access to your friends, coworkers, etc...",
-	Version:          "v0.5-alpha",
+	Version:          "v0.6-alpha",
 	TraverseChildren: true,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
