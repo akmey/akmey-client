@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	//	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -112,8 +113,8 @@ func initConfig() {
 		viper.SetConfigName("config")
 		viper.SetConfigType("json")
 		viper.ReadInConfig()
-		err = viper.ReadInConfig() // Find and read the config file
-		if err != nil {            // Handle errors reading the config file
+		_ = viper.ReadInConfig() // Find and read the config file
+		if err != nil {          // Handle errors reading the config file
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
 		}
 
