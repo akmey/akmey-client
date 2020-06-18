@@ -3,13 +3,14 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/briandowns/spinner"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/briandowns/spinner"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/cobra"
 )
 
 // removeCmd represents the remove command
@@ -69,7 +70,7 @@ var removeCmd = &cobra.Command{
 			stmt2.Exec(value)
 			toberemoved[id] = "\n" + value + " " + comment
 			// creates a temporary slice to convert the key + comment from string to... a slice
-			keyByte := []byte(value + " " + comment)
+			keyByte := []byte(value + " " + comment + "\n")
 			// removes the said key, one by one, from the keyfile
 			// TODO: only remove in the akmey section of the keyfile
 			fileWithKeyRemoved = bytes.Replace(fileWithKeyRemoved, keyByte, []byte(""), 1)
